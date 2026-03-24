@@ -1,0 +1,30 @@
+library(dplyr)
+library(ggplot2)
+
+df <- read.csv("freMTPL2freq.csv", sep = ";")
+
+df_summary <- df %>%
+  filter(DrivAge >= 18) %>% 
+  group_by(DrivAge) %>%
+  summarise(
+    TotalClaims = sum(ClaimNb),
+    TotalExposure = sum(Exposure),
+    Frequency = TotalClaims / TotalExposure
+  ) %>%
+  filter(TotalExposure > 10)
+
+ggplot(df_summary, aes(x = DrivAge, y = Frequency)) +
+  geom_line(color = "steelblue", linewidth = 1) +
+  geom_point(color = "darkred", size = 1.5) +
+  labs(
+    title = "Залежність частоти аварій від віку водія у Франції",
+    subtitle = "Частота розрахована як кількість аварій на 1 рік дії страхового поліса",
+    x = "Вік водія (роки)",
+    y = "Частота аварій"
+  ) +
+  theme_minimal() +
+  scale_x_continuous(breaks = seq(18, max(df_summary$DrivAge), by = 5)) +
+  theme(
+    plot.title = element_text(hjust = 0.5, face = "bold"),
+    plot.subtitle = element_text(hjust = 0.5)
+  )
