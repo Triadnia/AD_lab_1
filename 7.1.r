@@ -28,7 +28,6 @@ for(b in brands) {
     dir.create(area_dir, showWarnings = FALSE)
     
     data_ba <- df_all |> filter(VehBrand == b & Area == a)
-    
     veh_ages <- sort(unique(data_ba$VehAge))
     
     for(v_age in veh_ages) {
@@ -42,19 +41,24 @@ for(b in brands) {
           start_age <- inter[1]
           end_age <- inter[2]
           
-          data_plot <- data_v |> filter(DrivAge >= start_age & DrivAge <= end_age & ClaimNb > 0)
+          data_plot_raw <- data_v |> filter(DrivAge >= start_age & DrivAge <= end_age & ClaimNb > 0)
           
-          if(nrow(data_plot) > 0) {
+          if(nrow(data_plot_raw) > 0) {
+            
+            data_plot <- data_plot_raw |>
+              group_by(DrivAge, VehPower, VehGas) |>
+              summarise(TotalClaims = sum(ClaimNb), .groups = "drop")
+            
             data_plot$DrivAge <- factor(data_plot$DrivAge, levels = start_age:end_age)
             
-            p <- ggplot(data_plot, aes(x = VehPower, y = ClaimNb, fill = VehGas)) +
+            p <- ggplot(data_plot, aes(x = VehPower, y = TotalClaims, fill = VehGas)) +
               geom_bar(stat = "identity", position = "dodge") +
               facet_wrap(~DrivAge, drop = FALSE, ncol = 4) +
               scale_x_discrete(drop = FALSE) +
               theme_bw() +
               labs(title = paste("Марка:", b, "| Район:", a, "| Вік авто:", v_age),
-                   subtitle = paste("Інтервал віку водія:", start_age, "-", end_age, "років"),
-                   x = "Потужність (VehPower)", y = "Кількість реєстрацій") +
+                   subtitle = paste("СУМАРНА кількість аварій | Інтервал:", start_age, "-", end_age),
+                   x = "Потужність (VehPower)", y = "Кількість аварій (Сума)") +
               theme(strip.background = element_rect(fill="lightblue"),
                     strip.text = element_text(face="bold"))
             
